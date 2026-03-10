@@ -62,3 +62,29 @@
 2026-03-10T13:25:11 | Cliente desconectado: ('127.0.0.1', 53407)
 2026-03-10T13:25:12 | Cliente desconectado: ('127.0.0.1', 53415)
 2026-03-10T13:25:54 | Servidor apagado.
+2026-03-10T13:50:56 | Servidor SSL arrancado en localhost:3443
+2026-03-10T13:52:18 | Nueva conexión desde ('127.0.0.1', 53618)
+2026-03-10T13:53:33 | Petición recibida: REGISTRO
+2026-03-10T13:53:33 | Registro exitoso: 'Manuel'
+2026-03-10T13:53:42 | Petición recibida: LOGIN
+2026-03-10T13:53:42 | Login exitoso: 'Manuel'
+2026-03-10T13:53:49 | Petición recibida: MENSAJE
+2026-03-10T13:53:49 | Mensaje de 'Manuel': Hola
+2026-03-10T13:54:42 | Petición recibida: MENSAJE
+2026-03-10T13:54:42 | Mensaje de 'Manuel': hey
+2026-03-10T13:55:20 | Petición recibida: MENSAJE
+2026-03-10T13:55:20 | Mensaje de 'Manuel': buenas
+2026-03-10T13:57:48 | Servidor apagado.
+2026-03-10T13:57:57 | Servidor SSL arrancado en localhost:3443
+2026-03-10T13:58:01 | Nueva conexión desde ('127.0.0.1', 53678)
+2026-03-10T13:58:17 | Petición recibida: REGISTRO
+2026-03-10T13:58:22 | Petición recibida: REGISTRO
+2026-03-10T13:58:22 | Registro exitoso: 'Manuel2'
+2026-03-10T13:58:30 | Petición recibida: LOGIN
+2026-03-10T13:58:30 | Login exitoso: 'Manuel2'
+2026-03-10T13:58:42 | Petición recibida: MENSAJE
+2026-03-10T13:58:42 | Mensaje de 'Manuel2': Buenas, hola que tal
+2026-03-10T14:03:14 | Petición recibida: LOGOUT
+2026-03-10T14:03:14 | Logout: 'Manuel2'
+2026-03-10T14:03:14 | Nueva conexión desde ('127.0.0.1', 53697)
+2026-03-10T14:03:14 | Cliente desconectado: ('127.0.0.1', 53678)

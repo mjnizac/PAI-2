@@ -3,5 +3,25 @@
         "usuario": "Manu",
         "texto": "Hola a todos",
         "timestamp": "2026-03-10T13:25:07.550685"
+    },
+    {
+        "usuario": "Manuel",
+        "texto": "Hola",
+        "timestamp": "2026-03-10T13:53:49.998106"
+    },
+    {
+        "usuario": "Manuel",
+        "texto": "hey",
+        "timestamp": "2026-03-10T13:54:42.918784"
+    },
+    {
+        "usuario": "Manuel",
+        "texto": "buenas",
+        "timestamp": "2026-03-10T13:55:20.442675"
+    },
+    {
+        "usuario": "Manuel2",
+        "texto": "Buenas, hola que tal",
+        "timestamp": "2026-03-10T13:58:42.110492"
     }
 ]
