@@ -1,0 +1,15 @@
+2026-03-16T18:39:06 | Generando certificado MitM falso...
+2026-03-16T18:39:07 | Certificado MitM generado.
+2026-03-16T18:39:07 | PROXY MitM SSL escuchando en el puerto 3444
+2026-03-16T18:39:07 | Redirigiendo al servidor real en 3443
+2026-03-16T18:39:07 | El ataque funciona porque el cliente tiene CERT_NONE (no verifica certificado)
+2026-03-16T18:39:29 | Victima conectada desde ('127.0.0.1', 51701)
+2026-03-16T18:39:45 | Interceptado (CLIENTE -> SERVIDOR): LOGIN:admin:admin123
+2026-03-16T18:39:45 | Interceptado (SERVIDOR -> CLIENTE): LOGIN_OK:18175e775bd215d0ecafbf868eecf91eb800b2bcdede2ffb2be624cda24e56d9
+2026-03-16T18:40:18 | Interceptado (CLIENTE -> SERVIDOR): MENSAJE:18175e775bd215d0ecafbf868eecf91eb800b2bcdede2ffb2be624cda24e56d9:Te estoy enviando un mensaje secreto
+2026-03-16T18:40:18 | MENSAJE MODIFICADO | Original: 'Te estoy enviando un mensaje secreto' → Inyectado: 'MENSAJE MANIPULADO POR EL ATACANTE'
+2026-03-16T18:40:18 | Interceptado (SERVIDOR -> CLIENTE): Mensaje enviado correctamente.
+2026-03-16T18:40:52 | Interceptado (CLIENTE -> SERVIDOR): LOGOUT:18175e775bd215d0ecafbf868eecf91eb800b2bcdede2ffb2be624cda24e56d9
+2026-03-16T18:40:52 | Interceptado (SERVIDOR -> CLIENTE): Sesión cerrada correctamente.
+2026-03-16T18:40:53 | Victima conectada desde ('127.0.0.1', 51708)
+2026-03-16T18:41:23 | Proxy apagado.

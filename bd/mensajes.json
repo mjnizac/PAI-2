@@ -1,27 +1,17 @@
 [
     {
-        "usuario": "Manu",
-        "texto": "Hola a todos",
-        "timestamp": "2026-03-10T13:25:07.550685"
+        "usuario": "admin",
+        "texto": "MENSAJE MANIPULADO POR EL ATACANTE",
+        "timestamp": "2026-03-16T18:40:18.216131"
     },
     {
-        "usuario": "Manuel",
-        "texto": "Hola",
-        "timestamp": "2026-03-10T13:53:49.998106"
+        "usuario": "test_user_001",
+        "texto": "Hola desde el test funcional automatizado",
+        "timestamp": "2026-03-16T18:53:19.409014"
     },
     {
-        "usuario": "Manuel",
-        "texto": "hey",
-        "timestamp": "2026-03-10T13:54:42.918784"
-    },
-    {
-        "usuario": "Manuel",
-        "texto": "buenas",
-        "timestamp": "2026-03-10T13:55:20.442675"
-    },
-    {
-        "usuario": "Manuel2",
-        "texto": "Buenas, hola que tal",
-        "timestamp": "2026-03-10T13:58:42.110492"
+        "usuario": "test_user_001",
+        "texto": "Hola desde el test funcional automatizado",
+        "timestamp": "2026-03-16T19:02:30.708121"
     }
 ]

@@ -1,0 +1,37 @@
+2026-03-16T18:15:28 | ═══════════════════════════════════════════════════════
+2026-03-16T18:15:28 |   BENCHMARK PAI-2 — TLS 1.3 vs SIN TLS
+2026-03-16T18:15:28 |   Clientes concurrentes: 300
+2026-03-16T18:15:28 | ═══════════════════════════════════════════════════════
+2026-03-16T18:15:28 | Registrando usuario de prueba...
+2026-03-16T18:15:29 | Iniciando benchmark [CON TLS 1.3] con 300 clientes concurrentes...
+2026-03-16T18:15:30 | ── Resultados [CON TLS 1.3] ──────────────────────────────
+2026-03-16T18:15:30 |   Clientes totales    : 300
+2026-03-16T18:15:30 |   Completados (éxito) : 300
+2026-03-16T18:15:30 |   Fallidos            : 0
+2026-03-16T18:15:30 |   Tiempo total        : 1.027 s
+2026-03-16T18:15:30 |   Throughput          : 292.1 clientes/s
+2026-03-16T18:15:30 |   Latencia media      : 410.5 ms
+2026-03-16T18:15:30 |   Latencia mediana    : 342.2 ms
+2026-03-16T18:15:30 |   Latencia p95        : 784.9 ms
+2026-03-16T18:15:30 |   Latencia mín/máx    : 8.6 ms / 819.6 ms
+2026-03-16T18:15:31 | Iniciando benchmark [SIN TLS] con 300 clientes concurrentes...
+2026-03-16T18:15:31 | ── Resultados [SIN TLS] ──────────────────────────────
+2026-03-16T18:15:31 |   Clientes totales    : 300
+2026-03-16T18:15:31 |   Completados (éxito) : 300
+2026-03-16T18:15:31 |   Fallidos            : 0
+2026-03-16T18:15:31 |   Tiempo total        : 0.125 s
+2026-03-16T18:15:31 |   Throughput          : 2403.7 clientes/s
+2026-03-16T18:15:31 |   Latencia media      : 15.9 ms
+2026-03-16T18:15:31 |   Latencia mediana    : 16.5 ms
+2026-03-16T18:15:31 |   Latencia p95        : 25.0 ms
+2026-03-16T18:15:31 |   Latencia mín/máx    : 1.6 ms / 26.2 ms
+2026-03-16T18:15:31 | ═══════════════════════════════════════════════════════
+2026-03-16T18:15:31 |   COMPARATIVA FINAL
+2026-03-16T18:15:31 | ═══════════════════════════════════════════════════════
+2026-03-16T18:15:31 |   Overhead latencia TLS  : +394.6 ms (+2486.5%)
+2026-03-16T18:15:31 |   Overhead throughput    : -2111.6 clientes/s (+87.8%)
+2026-03-16T18:15:31 |   Clientes exitosos TLS  : 300/300
+2026-03-16T18:15:31 |   Clientes exitosos noTLS: 300/300
+2026-03-16T18:15:31 | ═══════════════════════════════════════════════════════
+2026-03-16T18:15:31 |   Resultados guardados en evidencias_benchmark.log
+2026-03-16T18:15:31 | ═══════════════════════════════════════════════════════

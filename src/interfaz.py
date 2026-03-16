@@ -9,14 +9,14 @@ import ssl
 HOST = "127.0.0.1"
 PORT = 3443
 
-# RF13 - Comunicación via sockets seguros (TLS 1.3)
-# RF12 - Interfaz gráfica de usuario
+
+# RF8 - conexión TLS 1.3, sin verificación de certificado (permite demostrar MitM)
 def conectar_servidor():
     try:
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ssl_context.minimum_version = ssl.TLSVersion.TLSv1_3
         ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE  # Sin verificación (demo — hace posible el MitM)
+        ssl_context.verify_mode = ssl.CERT_NONE  # intencional: permite demostrar el ataque MitM
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = ssl_context.wrap_socket(sock, server_hostname=HOST)
         ssl_sock.connect((HOST, PORT))
@@ -35,9 +35,6 @@ cliente        = conectar_servidor()
 usuario_actual = None
 token_actual   = None
 
-# ----------------------------
-# RF12 - Interfaz gráfica de usuario
-# ----------------------------
 root = tk.Tk()
 root.title("VPN SSL - Universidad de Sevilla")
 root.geometry("300x250")
@@ -56,10 +53,8 @@ def mostrar_formulario(titulo):
     password_entry.pack(pady=5)
     return formulario, username_entry, password_entry
 
-# ----------------------------
-# RF1 - Registro de usuarios
-# RF2 - Sin duplicados en registro
-# ----------------------------
+
+# RF1 - Registro
 def on_register_click():
     if not verificar_conexion():
         return
@@ -81,15 +76,13 @@ def on_register_click():
             messagebox.showinfo("Éxito", "Registro exitoso. Ahora puede iniciar sesión.")
             formulario.destroy()
         else:
-            messagebox.showerror("Error", respuesta)  # RF2 - Informa si el usuario ya existe
+            messagebox.showerror("Error", respuesta)
             password_entry.delete(0, tk.END)
 
     tk.Button(formulario, text="Registrarse", command=registrar).pack(pady=20)
 
-# ----------------------------
-# RF4 - Inicio de sesión
-# RF5 - Verificar credenciales / denegar si no coinciden
-# ----------------------------
+
+# RF2/RF3 - Login y verificación de credenciales
 def on_login_click():
     global usuario_actual, token_actual
     if not verificar_conexion():
@@ -109,24 +102,22 @@ def on_login_click():
         except Exception:
             messagebox.showerror("Error", "El servidor no está disponible.")
             return
-        if respuesta.startswith("LOGIN_OK:"):  # RF4 - Login exitoso
+        if respuesta.startswith("LOGIN_OK:"):
             token_actual   = respuesta.split(":", 1)[1]
             usuario_actual = usuario
             messagebox.showinfo("Éxito", "Inicio de sesión exitoso.")
             formulario.destroy()
             actualizar_interfaz(True)
-        else:  # RF5 - Denegar si credenciales incorrectas
+        else:
             messagebox.showerror("Error", respuesta)
             password_entry.delete(0, tk.END)
 
     tk.Button(formulario, text="Iniciar sesión", command=login).pack(pady=20)
 
-# ----------------------------
-# RF8 - Envío de mensajes (solo usuarios autenticados)
-# RF9 - Límite de 144 caracteres por mensaje
-# ----------------------------
+
+# RF6 - Envío de mensajes (solo autenticados, máx. 144 caracteres)
 def mostrar_formulario_mensaje():
-    if not token_actual:  # RF8 - Solo autenticados
+    if not token_actual:
         messagebox.showerror("Error", "Debes iniciar sesión para enviar mensajes.")
         return
     if not verificar_conexion():
@@ -143,7 +134,7 @@ def mostrar_formulario_mensaje():
         if not texto:
             messagebox.showerror("Error", "El mensaje no puede estar vacío.")
             return
-        if len(texto) > 144:  # RF9 - Límite de 144 caracteres
+        if len(texto) > 144:
             messagebox.showerror("Error", f"Máximo 144 caracteres (actual: {len(texto)}).")
             return
         try:
@@ -157,9 +148,8 @@ def mostrar_formulario_mensaje():
 
     tk.Button(formulario, text="Enviar", command=enviar).pack(pady=10)
 
-# ----------------------------
-# RF6 - Cerrar sesión
-# ----------------------------
+
+# RF4 - Logout
 def on_logout_click():
     global usuario_actual, token_actual, cliente
     if token_actual:
@@ -173,9 +163,6 @@ def on_logout_click():
     cliente        = conectar_servidor()
     actualizar_interfaz(False)
 
-# ----------------------------
-# RF12 - Interfaz gráfica de usuario
-# ----------------------------
 def actualizar_interfaz(sesion_iniciada):
     button_login.pack_forget()
     button_register.pack_forget()

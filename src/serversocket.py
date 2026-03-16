@@ -9,38 +9,32 @@ import os
 import logging
 import subprocess
 
-# -----------------------------
-# CONFIGURACIÓN DE LOGS
-# -----------------------------
+BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASE_FILE = os.path.join(BASE_DIR, "bd", "usuarios.json")
+MENSAJES_FILE = os.path.join(BASE_DIR, "bd", "mensajes.json")
+SALTS_FILE    = os.path.join(BASE_DIR, "bd", "salts.json")
+CERTFILE      = os.path.join(BASE_DIR, "cert.pem")
+KEYFILE       = os.path.join(BASE_DIR, "key.pem")
+LOG_FILE      = os.path.join(BASE_DIR, "evidencias", "evidencias_servidor.log")
+
+os.makedirs(os.path.join(BASE_DIR, "evidencias"), exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s | %(message)s',
     datefmt='%Y-%m-%dT%H:%M:%S',
     handlers=[
-        logging.FileHandler("evidencias_servidor.log", encoding='utf-8'),
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 
-# -----------------------------
-# CONFIGURACIÓN Y CONSTANTES
-# -----------------------------
 HOST = "localhost"
 PORT = 3443
-CERTFILE = "cert.pem"
-KEYFILE  = "key.pem"
-
-DATABASE_FILE  = "bd/usuarios.json"
-MENSAJES_FILE  = "bd/mensajes.json"
-SALTS_FILE     = "bd/salts.json"
 
 MAX_INTENTOS = 4
 LOCKOUT_TIME = 600  # segundos
 
-# -----------------------------
-# GENERACIÓN DE CERTIFICADO SSL
-# RF13 - Comunicación via sockets seguros
-# -----------------------------
+
 def generar_cert():
     if not os.path.exists(CERTFILE) or not os.path.exists(KEYFILE):
         logging.info("Generando certificado SSL autofirmado...")
@@ -52,13 +46,8 @@ def generar_cert():
         ], check=True)
         logging.info("Certificado generado: cert.pem / key.pem")
 
-# -----------------------------
-# CARGA INICIAL DE DATOS
-# RF10 - Persistencia de usuarios
-# RF11 - Persistencia de mensajes con fecha
-# -----------------------------
-if not os.path.exists("bd"):
-    os.makedirs("bd")
+
+os.makedirs(os.path.join(BASE_DIR, "bd"), exist_ok=True)
 
 try:
     with open(DATABASE_FILE, "r") as f:
@@ -81,9 +70,7 @@ except (FileNotFoundError, json.JSONDecodeError):
 tokens_activos    = {}  # {token: usuario}
 intentos_fallidos = {}  # {ip: (datetime, intentos)}
 
-# -----------------------------
-# RF7 - Usuarios preexistentes al arrancar
-# -----------------------------
+# RF5 - usuarios preexistentes que deben existir al arrancar
 USUARIOS_INICIALES = {
     "admin":  "admin123",
     "user1":  "pass1",
@@ -97,11 +84,7 @@ def sembrar_usuarios_iniciales():
         guardar_usuarios()
         logging.info("Usuarios iniciales cargados.")
 
-# -----------------------------
-# FUNCIONES DE UTILIDAD
-# -----------------------------
 
-# RF10 - Persistencia de usuarios
 def guardar_usuarios():
     with open(DATABASE_FILE, "w") as f:
         json.dump(usuarios, f, indent=4)
@@ -110,12 +93,13 @@ def guardar_salts():
     with open(SALTS_FILE, "w") as f:
         json.dump(salts, f, indent=4)
 
-# RF11 - Persistencia de mensajes con fecha
+
 def guardar_mensajes():
     with open(MENSAJES_FILE, "w") as f:
         json.dump(mensajes, f, indent=4)
 
-# RS1 - Almacenamiento seguro de contraseñas (SHA-256 + salt)
+
+# RS1 - SHA-256 + salt aleatorio por usuario
 def obtener_salt(usuario):
     if usuario not in salts:
         salts[usuario] = os.urandom(32).hex()
@@ -126,7 +110,7 @@ def hashear_contrasena(contrasena, usuario):
     salt = obtener_salt(usuario)
     return hashlib.sha256((salt + contrasena).encode()).hexdigest()
 
-# RF4 - Inicio de sesión (generación de token de sesión)
+
 def generar_token(usuario):
     token = secrets.token_hex(32)
     tokens_activos[token] = usuario
@@ -135,11 +119,10 @@ def generar_token(usuario):
 def verificar_token(token):
     return tokens_activos.get(token)
 
-# -----------------------------
-# MANEJO DE CLIENTES
-# -----------------------------
+
 def manejar_cliente(conn, addr):
-    logging.info(f"Nueva conexión desde {addr}")
+    cipher_info = conn.cipher()
+    logging.info(f"Nueva conexión desde {addr} | Suite: {cipher_info[0]} | TLS: {cipher_info[1]}")
     try:
         while True:
             datos = conn.recv(4096)
@@ -151,12 +134,10 @@ def manejar_cliente(conn, addr):
             accion  = partes[0]
             logging.info(f"Petición recibida: {accion}")
 
-            # RF1 - Registro de usuarios
-            # RF2 - Sin duplicados en registro
-            # RF3 - Sin modificación posterior (no existe comando de edición)
+            # RF1 - Registro de usuarios (sin duplicados, sin modificación posterior)
             if accion == "REGISTRO":
                 usuario, contrasena = partes[1], partes[2]
-                if usuario in usuarios:  # RF2 - Sin duplicados
+                if usuario in usuarios:
                     conn.send("Usuario ya registrado".encode())
                 else:
                     usuarios[usuario] = hashear_contrasena(contrasena, usuario)
@@ -164,14 +145,14 @@ def manejar_cliente(conn, addr):
                     conn.send("Usuario registrado exitosamente".encode())
                     logging.info(f"Registro exitoso: '{usuario}'")
 
-            # RF4 - Inicio de sesión
-            # RF5 - Verificar credenciales / denegar si no coinciden
+            # RF2 - Inicio de sesión
+            # RF3 - Verificar credenciales / denegar si no coinciden
             # RS1 - Protección anti-fuerza bruta
             elif accion == "LOGIN":
                 usuario, contrasena = partes[1], partes[2]
                 client_ip = addr[0]
 
-                # RS1 - Protección anti-fuerza bruta: bloqueo por IP
+                # RS1 - Bloqueo por IP tras MAX_INTENTOS fallos
                 if client_ip in intentos_fallidos:
                     ultimo, intentos = intentos_fallidos[client_ip]
                     if intentos >= MAX_INTENTOS and (datetime.datetime.now() - ultimo).seconds < LOCKOUT_TIME:
@@ -179,19 +160,18 @@ def manejar_cliente(conn, addr):
                         conn.send("Demasiados intentos fallidos. Inténtelo en 10 minutos.".encode())
                         continue
 
-                # RF5 - Verificar credenciales
                 if usuario in usuarios and hashear_contrasena(contrasena, usuario) == usuarios[usuario]:
                     token = generar_token(usuario)
                     conn.send(f"LOGIN_OK:{token}".encode())
                     intentos_fallidos.pop(client_ip, None)
                     logging.info(f"Login exitoso: '{usuario}'")
-                else:  # RF5 - Denegar si no coinciden
+                else:
                     intentos = intentos_fallidos.get(client_ip, (None, 0))[1] + 1
                     intentos_fallidos[client_ip] = (datetime.datetime.now(), intentos)
                     logging.warning(f"Login fallido: '{usuario}' desde {client_ip} (intento {intentos})")
                     conn.send(f"Login fallido. Intentos restantes: {MAX_INTENTOS - intentos}".encode())
 
-            # RF6 - Cerrar sesión
+            # RF4 - Cerrar sesión
             elif accion == "LOGOUT":
                 token   = partes[1]
                 usuario = verificar_token(token)
@@ -202,20 +182,18 @@ def manejar_cliente(conn, addr):
                 else:
                     conn.send("Sesión no válida.".encode())
 
-            # RF8 - Envío de mensajes (solo usuarios autenticados)
-            # RF9 - Límite de 144 caracteres por mensaje
-            # RF11 - Persistencia de mensajes con fecha
+            # RF6 - Mensajes (solo autenticados, máx. 144 caracteres) + RF7 persistencia
             elif accion == "MENSAJE":
                 token = partes[1]
                 texto = ":".join(partes[2:])
-                usuario = verificar_token(token)  # RF8 - Solo autenticados
+                usuario = verificar_token(token)
                 if not usuario:
                     conn.send("Sesión no válida. Inicia sesión de nuevo.".encode())
                     continue
-                if len(texto) > 144:  # RF9 - Límite de 144 caracteres
+                if len(texto) > 144:
                     conn.send("Mensaje demasiado largo (máx. 144 caracteres).".encode())
                     continue
-                mensajes.append({  # RF11 - Persistencia con fecha
+                mensajes.append({
                     "usuario":    usuario,
                     "texto":      texto,
                     "timestamp":  datetime.datetime.now().isoformat()
@@ -230,14 +208,12 @@ def manejar_cliente(conn, addr):
         conn.close()
         logging.info(f"Cliente desconectado: {addr}")
 
-# -----------------------------
-# INICIO DEL SERVIDOR
-# -----------------------------
+
 def main():
     generar_cert()
-    sembrar_usuarios_iniciales()  # RF7 - Usuarios preexistentes
+    sembrar_usuarios_iniciales()
 
-    # RF13 - Comunicación via sockets seguros (TLS 1.3)
+    # RF8 - TLS 1.3 obligatorio
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_context.minimum_version = ssl.TLSVersion.TLSv1_3
     ssl_context.load_cert_chain(certfile=CERTFILE, keyfile=KEYFILE)
@@ -248,7 +224,6 @@ def main():
         servidor.listen()
         servidor.settimeout(1.0)
 
-        # RF13 - Envolver socket con SSL
         with ssl_context.wrap_socket(servidor, server_side=True) as ssl_servidor:
             logging.info(f"Servidor SSL arrancado en {HOST}:{PORT}")
             while True:
