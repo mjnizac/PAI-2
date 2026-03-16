@@ -53,6 +53,17 @@ python src/proxy_atacante.py
 
 ---
 
+## Análisis de tráfico con Wireshark
+
+Las capturas `.pcap` están en `evidencias/`. Para reproducirlas:
+
+1. Abrir `evidencias/captura_tls.pcap` en Wireshark → filtro `tcp.port == 3443` → el payload aparece como **TLSv1.3 Application Data** (cifrado, ilegible)
+2. Abrir `evidencias/captura_notls.pcap` en Wireshark → filtro `tcp.port == 3445` → los mensajes aparecen en **texto plano**
+
+Para capturar en vivo: seleccionar la interfaz **"Adapter for loopback traffic capture"** en Wireshark.
+
+---
+
 ## Tests y benchmark
 
 ```bash
